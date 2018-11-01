@@ -1,7 +1,7 @@
 <?php
 /*Plugin Name: Post Table Mods
 Description: Modifies the main posts table.
-Version: 1.0.1
+Version: 1.0.2
 License: GPLv2
 GitHub Plugin URI: https://github.com/aaronaustin/posts-table-mods
 */
@@ -74,6 +74,13 @@ function modify_read_more_link() {
  return '<a class="more-link" href="' . get_field('path') . '">Read More...</a>';
 }
 add_filter( 'the_content_more_link', 'modify_read_more_link' );
+
+function new_excerpt_more($more) {
+ global $post;
+ return '<a class="moretag" 
+ href="'. get_field('path', $post->ID) . '">Read More...</a>';
+}
+add_filter('excerpt_more', 'new_excerpt_more');
 
 function custom_excerpt_length( $length ) {
 	return 20;
