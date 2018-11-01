@@ -1,7 +1,7 @@
 <?php
 /*Plugin Name: Post Table Mods
 Description: Modifies the main posts table.
-Version: 1.0
+Version: 1.0.1
 License: GPLv2
 GitHub Plugin URI: https://github.com/aaronaustin/posts-table-mods
 */
@@ -69,6 +69,16 @@ function registerCustomAdminCss(){
 	$handle = "customAdminCss";
 	wp_enqueue_style($handle, $src, array(), false, false);
 }
+
+function modify_read_more_link() {
+ return '<a class="more-link" href="' . get_field('path') . '">Read More...</a>';
+}
+add_filter( 'the_content_more_link', 'modify_read_more_link' );
+
+function custom_excerpt_length( $length ) {
+	return 20;
+}
+add_filter( 'excerpt_length', 'custom_excerpt_length', 999 );
 
 
 ?>
