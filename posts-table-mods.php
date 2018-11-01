@@ -75,6 +75,15 @@ function modify_read_more_link() {
 }
 add_filter( 'the_content_more_link', 'modify_read_more_link' );
 
+function child_theme_setup() {
+	// override parent theme's 'more' text for excerpts
+	remove_filter( 'excerpt_more', 'twentyseventeen_excerpt_more' ); 
+}
+add_action( 'after_setup_theme', 'child_theme_setup' );
+
+
+add_filter( 'excerpt_more', 'twentyseventeen_excerpt_more' );
+
 function new_excerpt_more($more) {
  global $post;
  return '<a class="moretag" 
