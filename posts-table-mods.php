@@ -12,28 +12,62 @@ GitHub Plugin URI: https://github.com/aaronaustin/posts-table-mods
 add_filter( 'manage_posts_columns', 'set_custom_edit_posts_columns' );
 function set_custom_edit_posts_columns($columns) {
     unset( $columns['author'] );
-    // unset( $columns['categories'] );
+    unset( $columns['categories'] );
     unset( $columns['comments'] );
     unset( $columns['tags'] );
     unset( $columns['date'] );
 	// $columns['start_date'] = __( 'Start Date', 'start_date' );
-	$columns['date'] =__('Date', 'date');
+    $columns['main_category'] =__('Category', 'categories');
+    $columns['display_location'] =__('Display', 'display');
+	$columns['post_date'] =__('Date', 'date');
+	
 
     return $columns;
 }
 
 // Add the data to the custom columns for the main post type:
+    //TODO: if post is event, put event Date, otherwise - publish date
 add_action( 'manage_posts_custom_column' , 'custom_posts_column', 10, 2 );
 function custom_posts_column( $column, $post_id ) {
     switch ( $column ) {
-		case 'start_date' :
-			$date = get_post_meta( $post_id , 'start_date' , true );
-			if ($date){
-				echo date("Y-m-d <\b\\r><\s\m\a\l\l\> D \@ g:i a <\/\s\m\a\l\l>", strtotime($date));
+		case 'post_date' :
+            $event_date = date("Y-m-d", strtotime(get_post_meta( $post_id , 'start_date' , true )));
+            $event_time = date("D • g:i a", strtotime(get_post_meta( $post_id , 'start_date' , true )));
+            $pub_date = get_the_date("Y-m-d", $post_id);
+            $pub_time = get_the_date("D • g:i a", $post_id);
+            $category = get_the_category($post_id);
+            // var_dump($category[0]->slug);
+			if ($category[0]->slug === 'event'){
+				// echo 'E: '.date("Y-m-d <\b\\r><\s\m\a\l\l\> D \&\m\i\d\d\o\\t\; g:i a <\/\s\m\a\l\l>", strtotime($event_date));
+				echo '<small>Event Date</small><br>'.$event_date.'<br><small>'.$event_time.'</small>';
 			}
 			else {
-				echo '';
+                echo date($date);
+				echo '<small>Pub Date</small><br>'.$pub_date.'<br><small>'.$pub_time.'</small>';
 			}
+            break;
+        case 'main_category' :
+            $arrs[] = get_the_category($post_id);
+            $arrs[] = get_the_terms($post_id, 'media');
+            $arrs[] = get_the_terms($post_id, 'slide');
+            // $arrs[] = get_the_terms($post_id, 'display');
+
+            $all_categories = array();
+
+            foreach($arrs as $arr) {
+                if(is_array($arr)) {
+                    $all_categories = array_merge($all_categories, $arr);
+                }
+            }
+            foreach ($all_categories as $cat) {
+                echo '<a class="btn-tag '. $cat->slug .'" href="edit.php?taxonomy='.$cat->taxonomy.'&amp;term='. $cat->slug .'">'.$cat->name.'</a>';
+            }
+            break;
+        case 'display_location' :
+            $display_categories = get_the_terms($post_id, 'display');
+            foreach ($display_categories as $cat) {
+                echo '<a class="btn-tag '. $cat->slug .'" href="edit.php?taxonomy='.$cat->taxonomy.'&amp;term='. $cat->slug .'">'.$cat->name.'</a>';
+            }
             break;
     }
 }
@@ -41,7 +75,7 @@ function custom_posts_column( $column, $post_id ) {
 //make custom columns sortable
 add_filter( 'manage_edit-post_sortable_columns', 'set_custom_post_sortable_columns' );
 function set_custom_post_sortable_columns( $columns ) {
-    $columns['start_date'] = 'start_date';
+    $columns['post_date'] = 'post_date';
     return $columns;
 }
 
