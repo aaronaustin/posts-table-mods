@@ -1,7 +1,7 @@
 <?php
 /*Plugin Name: Post Table Mods
 Description: Modifies the main posts table.
-Version: 1.0.6
+Version: 1.0.7
 License: GPLv2
 GitHub Plugin URI: https://github.com/aaronaustin/posts-table-mods
 */
@@ -31,13 +31,12 @@ add_action( 'manage_posts_custom_column' , 'custom_posts_column', 10, 2 );
 function custom_posts_column( $column, $post_id ) {
     switch ( $column ) {
 		case 'post_date' :
-            $event_date = date("Y-m-d", strtotime(get_post_meta( $post_id , 'start_date' , true )));
-            $event_time = date("D • g:i a", strtotime(get_post_meta( $post_id , 'start_date' , true )));
+            $event_date = date("Y-m-d", strtotime(get_post_meta( $post_id , 'event_start_datetime' , true )));
+            $event_time = date("D • g:i a", strtotime(get_post_meta( $post_id , 'event_start_datetime' , true )));
             $pub_date = get_the_date("Y-m-d", $post_id);
             $pub_time = get_the_date("D • g:i a", $post_id);
-            $category = get_the_category($post_id);
-            // var_dump($category[0]->slug);
-			if ($category[0]->slug === 'event'){
+            $category = get_the_category($post_id);            // var_dump($category[0]->slug);
+			if ($category[0]->slug === 'event' || $category[0]->slug === 'worship'){
 				// echo 'E: '.date("Y-m-d <\b\\r><\s\m\a\l\l\> D \&\m\i\d\d\o\\t\; g:i a <\/\s\m\a\l\l>", strtotime($event_date));
 				echo '<small>Event Date</small><br>'.$event_date.'<br><small>'.$event_time.'</small>';
 			}
@@ -50,8 +49,6 @@ function custom_posts_column( $column, $post_id ) {
             $arrs[] = get_the_category($post_id);
             $arrs[] = get_the_terms($post_id, 'media');
             $arrs[] = get_the_terms($post_id, 'slide');
-            // $arrs[] = get_the_terms($post_id, 'display');
-
             $all_categories = array();
 
             foreach($arrs as $arr) {
@@ -79,14 +76,23 @@ function set_custom_post_sortable_columns( $columns ) {
     return $columns;
 }
 
+//hacky sorting by using the path_custom field which saves differently based on category
+//according to pub date or start date depending on category
 add_action( 'pre_get_posts', 'post_custom_orderby' );
 function post_custom_orderby( $query ) {
   if ( ! is_admin() )
     return;
   $orderby = $query->get( 'orderby');
-  if ( 'start_date' == $orderby ) {
-    $query->set( 'meta_key', 'start_date');
-    $query->set( 'orderby', 'meta_value' );
+  if ( 'post_date' == $orderby ) {
+    // $query->set( 'meta_key', 'path_custom');
+    $query->set('meta_query', array(
+            'date_clause' => array(
+                array('key' => 'path_custom',
+                    'type' => 'DATE'
+                )
+            )
+            ));
+    $query->set( 'orderby', 'meta_value');
   }
 }
 
@@ -121,7 +127,8 @@ add_filter( 'excerpt_more', 'twentyseventeen_excerpt_more' );
 function new_excerpt_more($more) {
  global $post;
  return '...<a class="moretag" 
- href="/'. get_field('path', $post->ID) . '">Read More</a>';
+ href="'. get_field('front_URL', 'option').'/'.get_field('path', $post->ID) . '">Read More</a>';
+
 }
 add_filter('excerpt_more', 'new_excerpt_more');
 
